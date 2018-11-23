@@ -19,6 +19,7 @@ Pacman agents (in searchAgents.py).
 
 import util
 
+
 class SearchProblem:
     """
     This class outlines the structure of a search problem, but doesn't implement
@@ -70,7 +71,8 @@ def tinyMazeSearch(problem):
     from game import Directions
     s = Directions.SOUTH
     w = Directions.WEST
-    return  [s, s, w, s, w, w, s, w]
+    return [s, s, w, s, w, w, s, w]
+
 
 def depthFirstSearch(problem):
     """
@@ -89,15 +91,66 @@ def depthFirstSearch(problem):
     "*** YOUR CODE HERE ***"
     util.raiseNotDefined()
 
+
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
     util.raiseNotDefined()
 
+
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
-    "*** YOUR CODE HERE ***"
+
+    start_state = problem.getStartState()
+
+    previous_states = dict()
+    cumulative_costs = dict()
+    cumulative_costs[start_state] = 0
+
+    priority_queue = util.PriorityQueue()
+    priority_queue.push(start_state, 0)
+
+    while not priority_queue.isEmpty():
+        current_state = priority_queue.pop()
+
+        if problem.isGoalState(current_state):
+            return build_path(previous_states, current_state)
+
+        successors = problem.getSuccessors(current_state)
+        for (successor_state, action, cost) in successors:
+
+            cumulative_cost = cumulative_costs[current_state] + cost
+
+            if is_better_cost(cumulative_cost, cumulative_costs, successor_state):
+                cumulative_costs[successor_state] = cumulative_cost
+                previous_states[successor_state] = (current_state, action)
+                priority_queue.update(successor_state, cumulative_cost)
+
     util.raiseNotDefined()
+
+
+def is_better_cost(cumulative_cost, cumulative_costs, state):
+    if state not in cumulative_costs:
+        return True
+
+    return cumulative_cost < cumulative_costs[state]
+
+
+def build_path(previous_states, end_state):
+    action_stack = util.Stack()
+    current_state = end_state
+    while current_state in previous_states:
+        (previous_state, action) = previous_states[current_state]
+        action_stack.push(action)
+        current_state = previous_state
+
+    action_list = []
+    while not action_stack.isEmpty():
+        action = action_stack.pop()
+        action_list.append(action)
+
+    return action_list
+
 
 def nullHeuristic(state, problem=None):
     """
@@ -105,6 +158,7 @@ def nullHeuristic(state, problem=None):
     goal in the provided SearchProblem.  This heuristic is trivial.
     """
     return 0
+
 
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""

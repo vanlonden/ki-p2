@@ -1,3 +1,23 @@
+A)
+
+There is a class called GameState, which contains a field data, which is an
+instance of the GameStateData class.
+
+The instance class GameStateData contains the actual game state.
+
+The GameState class is a wrapper with some useful methods that can be used to query the GameStateData
+
+It contains the score and positions of objects such as walls, food, capsules.
+Furthermore, the game state contains information about whether or not Pacman has won or lost.
+Finally it contains the states of the agents, including Pacman.
+
+The game state is updated by creating a copy of the current game state.
+Then applying some logic based on the supplied the supplied action and agent index.
+If the agent is pacman, the logic is different than that of the ghosts.
+
+
+b) The
+
 C) The data structure "Stack" is best described by the metaphor "huge pile of dirty restaurant dishes", because when an object is taken out of a stack
    it will be the last object that was put in the stack.
    The data structure "Queue" is best described by the metaphor "roller coaster waiting line" because it will use the First In First Out principle.
