@@ -15,8 +15,16 @@ The game state is updated by creating a copy of the current game state.
 Then applying some logic based on the supplied the supplied action and agent index.
 If the agent is pacman, the logic is different than that of the ghosts.
 
-
-b) The
+B)  Game.py has a couple of classes: Agent, Directions, AgentState, Configuration, Grid, GameStateData and Game.
+    The Game classes manages the control flow. It uses the input of controls to navigate the character and update the game. For this it uses the classes
+    GameState, AgentState and Grid.
+    The AgentState Class holds the state of the agent. This regards its speed and configuration but also which character the it processes. It uses the
+    configuration class to find out which what the x,y coordinates of an agent are and what direction it is traveling in. When an agent makes a move it
+    uses the class Actions to get the LegalActions and the successor states.
+    The GameStateData holds the data about the instance of the game. It will be created by data from its predecessor state. It also is used to create
+    the first GameState
+    The Grid Class is a 2-dimensional array that holds information about all the objects(walls, capsules and food) and Agents(Pacman and ghosts) on the
+    field.
 
 C) The data structure "Stack" is best described by the metaphor "huge pile of dirty restaurant dishes", because when an object is taken out of a stack
    it will be the last object that was put in the stack.
