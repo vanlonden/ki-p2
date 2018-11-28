@@ -1,0 +1,8 @@
+3a. A search strategy is complete when it is always able to find a solution, as long it exists.
+3b. Yes, our search strategy always finds a solution, in every different kind of maze, because it visits all different
+states until it encounters the goal
+3c. No, once our search strategy reaches the goal, it stops searching for different routes. Because there sometimes are
+multiple routes towards the goal, it isn’t always guaranteed that the solution found is the shortest.
+3d. The exploration order is what you’d expect from a depth-first search: when the search reaches a dead end, it goes
+back to the previous node, and takes the other route. Because of this, Pac-Man doesn’t visit all explored squares, as
+some squares don’t lead towards the goal.
