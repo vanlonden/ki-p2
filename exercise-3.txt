@@ -1,0 +1,2 @@
+3a. A search strategy is complete when it is always able to find a solution, as long it exists.
+3b.

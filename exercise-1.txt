@@ -1,1 +1,6 @@
-a)
+C) The data structure "Stack" is best described by the metaphor "huge pile of dirty restaurant dishes", because when an object is taken out of a stack
+   it will be the last object that was put in the stack.
+   The data structure "Queue" is best described by the metaphor "roller coaster waiting line" because it will use the First In First Out principle.
+   When you take an object out of a queue it will be the object that was in there for the longest time.
+   The data structure "Priority Queue" is best described by the metaphor "Emergency Room Waiting Area" because when you take an object out of the
+   Priority Queue it will be the object with the highest priority.
