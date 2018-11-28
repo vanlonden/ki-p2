@@ -88,68 +88,55 @@ def depthFirstSearch(problem):
     print "Is the start a goal?", problem.isGoalState(problem.getStartState())
     print "Start's successors:", problem.getSuccessors(problem.getStartState())
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    visited = set()
+    previousStates = dict()
+
+    stack = util.Stack()
+    stack.push(problem.getStartState())
+    while not stack.isEmpty():
+        currentState = stack.pop()
+
+        visited.add(currentState)
+
+        if problem.isGoalState(currentState):
+            return buildPath(previousStates, currentState)
+
+        for (successorState, action, cost) in problem.getSuccessors(currentState):
+            if successorState not in visited:
+                previousStates[successorState] = (currentState, action)
+                stack.push(successorState)
 
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    startState = problem.getStartState()
+
+    previousStates = dict()
+    visited = set()
+    queue = util.Queue()
+
+    queue.push(startState)
+    visited.add(startState)
+
+    while not queue.isEmpty():
+        currentState = queue.pop()
+
+        if problem.isGoalState(currentState):
+            return buildPath(previousStates, currentState)
+
+        for (successorState, action, cost) in problem.getSuccessors(currentState):
+            if successorState not in visited:
+                previousStates[successorState] = (currentState, action)
+                queue.push(successorState)
+
+                visited.add(successorState)
 
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
 
-    start_state = problem.getStartState()
-
-    previous_states = dict()
-    cumulative_costs = dict()
-    cumulative_costs[start_state] = 0
-
-    priority_queue = util.PriorityQueue()
-    priority_queue.push(start_state, 0)
-
-    while not priority_queue.isEmpty():
-        current_state = priority_queue.pop()
-
-        if problem.isGoalState(current_state):
-            return build_path(previous_states, current_state)
-
-        successors = problem.getSuccessors(current_state)
-        for (successor_state, action, cost) in successors:
-
-            cumulative_cost = cumulative_costs[current_state] + cost
-
-            if is_better_cost(cumulative_cost, cumulative_costs, successor_state):
-                cumulative_costs[successor_state] = cumulative_cost
-                previous_states[successor_state] = (current_state, action)
-                priority_queue.update(successor_state, cumulative_cost)
-
-    util.raiseNotDefined()
-
-
-def is_better_cost(cumulative_cost, cumulative_costs, state):
-    if state not in cumulative_costs:
-        return True
-
-    return cumulative_cost < cumulative_costs[state]
-
-
-def build_path(previous_states, end_state):
-    action_stack = util.Stack()
-    current_state = end_state
-    while current_state in previous_states:
-        (previous_state, action) = previous_states[current_state]
-        action_stack.push(action)
-        current_state = previous_state
-
-    action_list = []
-    while not action_stack.isEmpty():
-        action = action_stack.pop()
-        action_list.append(action)
-
-    return action_list
+    return aStarSearch(problem, nullHeuristic)
 
 
 def nullHeuristic(state, problem=None):
@@ -162,8 +149,54 @@ def nullHeuristic(state, problem=None):
 
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    startState = problem.getStartState()
+
+    estimateCosts = dict()
+    previousStates = dict()
+    cumulativeCosts = dict()
+    cumulativeCosts[startState] = 0
+
+    priorityQueue = util.PriorityQueue()
+    priorityQueue.push(startState, 0)
+
+    while not priorityQueue.isEmpty():
+        currentState = priorityQueue.pop()
+
+        if problem.isGoalState(currentState):
+            return buildPath(previousStates, currentState)
+
+        successors = problem.getSuccessors(currentState)
+        for (successorState, action, cost) in successors:
+            cumulativeCost = cumulativeCosts[currentState] + cost
+
+            if isBetterCost(cumulativeCost, cumulativeCosts, successorState):
+                cumulativeCosts[successorState] = cumulativeCost
+                previousStates[successorState] = (currentState, action)
+                estimateCosts[successorState] = cumulativeCost + heuristic(successorState, problem)
+                priorityQueue.update(successorState, cumulativeCost)
+
+
+def isBetterCost(cumulativeCost, cumulativeCosts, state):
+    if state not in cumulativeCosts:
+        return True
+
+    return cumulativeCost < cumulativeCosts[state]
+
+
+def buildPath(previousStates, endState):
+    actionStack = util.Stack()
+    currentState = endState
+    while currentState in previousStates:
+        (previousState, action) = previousStates[currentState]
+        actionStack.push(action)
+        currentState = previousState
+
+    actionList = []
+    while not actionStack.isEmpty():
+        action = actionStack.pop()
+        actionList.append(action)
+
+    return actionList
 
 
 # Abbreviations
