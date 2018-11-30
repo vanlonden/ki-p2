@@ -151,6 +151,7 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     startState = problem.getStartState()
 
+    visited = set()
     estimateCosts = dict()
     previousStates = dict()
     cumulativeCosts = dict()
@@ -161,19 +162,19 @@ def aStarSearch(problem, heuristic=nullHeuristic):
 
     while not priorityQueue.isEmpty():
         currentState = priorityQueue.pop()
+        visited.add(currentState)
 
         if problem.isGoalState(currentState):
             return buildPath(previousStates, currentState)
 
-        successors = problem.getSuccessors(currentState)
-        for (successorState, action, cost) in successors:
-            cumulativeCost = cumulativeCosts[currentState] + cost
-
-            if isBetterCost(cumulativeCost, cumulativeCosts, successorState):
-                cumulativeCosts[successorState] = cumulativeCost
-                previousStates[successorState] = (currentState, action)
-                estimateCosts[successorState] = cumulativeCost + heuristic(successorState, problem)
-                priorityQueue.update(successorState, cumulativeCost)
+        for (successorState, action, cost) in problem.getSuccessors(currentState):
+            if successorState not in visited:
+                cumulativeCost = cumulativeCosts[currentState] + cost
+                if isBetterCost(cumulativeCost, cumulativeCosts, successorState):
+                    priorityQueue.update(successorState, cumulativeCost)
+                    cumulativeCosts[successorState] = cumulativeCost
+                    estimateCosts[successorState] = cumulativeCost + heuristic(successorState, problem)
+                    previousStates[successorState] = (currentState, action)
 
 
 def isBetterCost(cumulativeCost, cumulativeCosts, state):
