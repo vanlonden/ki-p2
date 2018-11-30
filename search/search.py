@@ -169,12 +169,15 @@ def aStarSearch(problem, heuristic=nullHeuristic):
 
         for (successorState, action, cost) in problem.getSuccessors(currentState):
             if successorState not in visited:
+
                 cumulativeCost = cumulativeCosts[currentState] + cost
+
                 if isBetterCost(cumulativeCost, cumulativeCosts, successorState):
-                    priorityQueue.update(successorState, cumulativeCost)
-                    cumulativeCosts[successorState] = cumulativeCost
-                    estimateCosts[successorState] = cumulativeCost + heuristic(successorState, problem)
+                    estimateCost = cumulativeCost + heuristic(successorState, problem)
                     previousStates[successorState] = (currentState, action)
+                    cumulativeCosts[successorState] = cumulativeCost
+                    estimateCosts[successorState] = estimateCost
+                    priorityQueue.update(successorState, estimateCost)
 
 
 def isBetterCost(cumulativeCost, cumulativeCosts, state):
