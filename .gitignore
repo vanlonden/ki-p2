@@ -1,3 +1,5 @@
 .idea/
 ki-p2.iml
+
 *.pyc
+*.iml
