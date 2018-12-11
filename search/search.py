@@ -89,23 +89,22 @@ def depthFirstSearch(problem):
     print "Start's successors:", problem.getSuccessors(problem.getStartState())
     """
 
-    visited = set()
+    closedSet = set()
     previousStates = dict()
 
-    stack = util.Stack()
-    stack.push(problem.getStartState())
-    while not stack.isEmpty():
-        currentState = stack.pop()
-
-        visited.add(currentState)
+    openStack = util.Stack()
+    openStack.push(problem.getStartState())
+    while not openStack.isEmpty():
+        currentState = openStack.pop()
+        closedSet.add(currentState)
 
         if problem.isGoalState(currentState):
             return buildPath(previousStates, currentState)
 
         for (successorState, action, cost) in problem.getSuccessors(currentState):
-            if successorState not in visited:
+            if successorState not in closedSet:
                 previousStates[successorState] = (currentState, action)
-                stack.push(successorState)
+                openStack.push(successorState)
 
 
 def breadthFirstSearch(problem):
@@ -113,24 +112,23 @@ def breadthFirstSearch(problem):
     startState = problem.getStartState()
 
     previousStates = dict()
-    visited = set()
-    queue = util.Queue()
+    closedSet = set()
+    openQueue = util.Queue()
 
-    queue.push(startState)
-    visited.add(startState)
+    openQueue.push(startState)
+    closedSet.add(startState)
 
-    while not queue.isEmpty():
-        currentState = queue.pop()
+    while not openQueue.isEmpty():
+        currentState = openQueue.pop()
 
         if problem.isGoalState(currentState):
             return buildPath(previousStates, currentState)
 
         for (successorState, action, cost) in problem.getSuccessors(currentState):
-            if successorState not in visited:
+            if successorState not in closedSet:
                 previousStates[successorState] = (currentState, action)
-                queue.push(successorState)
-
-                visited.add(successorState)
+                openQueue.push(successorState)
+                closedSet.add(successorState)
 
 
 def uniformCostSearch(problem):
@@ -151,33 +149,34 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     startState = problem.getStartState()
 
-    visited = set()
-    estimateCosts = dict()
     previousStates = dict()
-    cumulativeCosts = dict()
-    cumulativeCosts[startState] = 0
+    closedSet = set()
 
-    priorityQueue = util.PriorityQueue()
-    priorityQueue.push(startState, 0)
+    costSoFar = dict()
+    estimateTotalCost = dict()
 
-    while not priorityQueue.isEmpty():
-        currentState = priorityQueue.pop()
-        visited.add(currentState)
+    openQueue = util.PriorityQueue()
+    openQueue.push(startState, 0)
+    costSoFar[startState] = 0
+
+    while not openQueue.isEmpty():
+        currentState = openQueue.pop()
+        closedSet.add(currentState)
 
         if problem.isGoalState(currentState):
             return buildPath(previousStates, currentState)
 
         for (successorState, action, cost) in problem.getSuccessors(currentState):
-            if successorState not in visited:
+            if successorState not in closedSet:
 
-                cumulativeCost = cumulativeCosts[currentState] + cost
+                cumulativeCost = costSoFar[currentState] + cost
 
-                if isBetterCost(cumulativeCost, cumulativeCosts, successorState):
+                if isBetterCost(cumulativeCost, costSoFar, successorState):
                     estimateCost = cumulativeCost + heuristic(successorState, problem)
                     previousStates[successorState] = (currentState, action)
-                    cumulativeCosts[successorState] = cumulativeCost
-                    estimateCosts[successorState] = estimateCost
-                    priorityQueue.update(successorState, estimateCost)
+                    costSoFar[successorState] = cumulativeCost
+                    estimateTotalCost[successorState] = estimateCost
+                    openQueue.update(successorState, estimateCost)
 
 
 def isBetterCost(cumulativeCost, cumulativeCosts, state):
