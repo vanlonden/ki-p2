@@ -52,13 +52,39 @@ class ValueIterationAgent(ValueEstimationAgent):
             self.values = self.doIteration()
 
     def doIteration(self):
+        """
+            Does an iteration and returns the newly computed values.
+        """
         values = util.Counter()
         for state in self.mdp.getStates():
-            rewardsPerAction = self.computeActionRewards(state)
-            bestAction = rewardsPerAction.argMax()
-            values[state] = rewardsPerAction[bestAction]
+            expectedActionRewards = self.computeExpectedActionRewards(state)
+            bestAction = expectedActionRewards.argMax()
+            values[state] = expectedActionRewards[bestAction]
 
         return values
+
+    def computeExpectedActionRewards(self, state):
+        """
+            Computes the Q values for each possible action
+            in the given state and returns the results.
+        """
+        expectedActionRewards = util.Counter()
+        for action in self.mdp.getPossibleActions(state):
+            expectedActionRewards[action] = self.computeQValueFromValues(state, action)
+
+        return expectedActionRewards
+
+    def computeQValueFromValues(self, state, action):
+        """
+            Compute the Q-value of action in state from the
+            value function stored in self.values.
+        """
+        possibleStateRewards = util.Counter()
+        for (nextState, probability) in self.mdp.getTransitionStatesAndProbs(state, action):
+            transitionReward = self.mdp.getReward(state, action, nextState)
+            possibleStateRewards[nextState] = probability * (transitionReward + self.discount * self.getValue(nextState))
+
+        return possibleStateRewards.totalCount()
 
     def getValue(self, state):
         """
@@ -81,28 +107,9 @@ class ValueIterationAgent(ValueEstimationAgent):
         if self.mdp.isTerminal(state):
             return None
 
-        rewardPerAction = self.computeActionRewards(state)
+        rewardPerAction = self.computeExpectedActionRewards(state)
 
         return rewardPerAction.argMax()
-
-    def computeActionRewards(self, state):
-        rewardPerAction = util.Counter()
-        for action in self.mdp.getPossibleActions(state):
-            rewardPerAction[action] = self.computeQValueFromValues(state, action)
-
-        return rewardPerAction
-
-    def computeQValueFromValues(self, state, action):
-        """
-          Compute the Q-value of action in state from the
-          value function stored in self.values.
-        """
-        possibleStateRewards = util.Counter()
-        for (nextState, probability) in self.mdp.getTransitionStatesAndProbs(state, action):
-            transitionReward = self.mdp.getReward(state, action, nextState)
-            possibleStateRewards[nextState] = probability * (transitionReward + self.discount * self.getValue(nextState))
-
-        return possibleStateRewards.totalCount()
 
     def getPolicy(self, state):
         return self.computeActionFromValues(state)

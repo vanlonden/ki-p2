@@ -152,31 +152,33 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     previousStates = dict()
     closedSet = set()
 
-    costSoFar = dict()
-    estimateTotalCost = dict()
+    costsSoFar = dict()
+    estimateTotalCosts = dict()
 
     openQueue = util.PriorityQueue()
     openQueue.push(startState, 0)
-    costSoFar[startState] = 0
+    costsSoFar[startState] = 0
 
     while not openQueue.isEmpty():
-        currentState = openQueue.pop()
-        closedSet.add(currentState)
+        current = openQueue.pop()
+        closedSet.add(current)
 
-        if problem.isGoalState(currentState):
-            return buildPath(previousStates, currentState)
+        if problem.isGoalState(current):
+            return buildPath(previousStates, current)
 
-        for (successorState, action, cost) in problem.getSuccessors(currentState):
-            if successorState not in closedSet:
+        for (successor, action, cost) in problem.getSuccessors(current):
+            if successor not in closedSet:
 
-                cumulativeCost = costSoFar[currentState] + cost
+                costSoFar = costsSoFar[current] + cost
 
-                if isBetterCost(cumulativeCost, costSoFar, successorState):
-                    estimateCost = cumulativeCost + heuristic(successorState, problem)
-                    previousStates[successorState] = (currentState, action)
-                    costSoFar[successorState] = cumulativeCost
-                    estimateTotalCost[successorState] = estimateCost
-                    openQueue.update(successorState, estimateCost)
+                if isBetterCost(costSoFar, costsSoFar, successor):
+                    costsSoFar[successor] = costSoFar
+
+                    estimatedTotalCost = costSoFar + heuristic(successor, problem)
+                    estimateTotalCosts[successor] = estimatedTotalCost
+                    openQueue.update(successor, estimatedTotalCost)
+
+                    previousStates[successor] = (current, action)
 
 
 def isBetterCost(cumulativeCost, cumulativeCosts, state):

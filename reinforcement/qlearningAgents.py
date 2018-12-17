@@ -73,6 +73,9 @@ class QLearningAgent(ReinforcementAgent):
         if len(legalActions) == 0:
             return 0.0
 
+        # Iterate over all legal actions in the state
+        # while keeping track of the highest Q value,
+        # then return that highest Q value.
         maxQValue = float("-Inf")
         for action in legalActions:
             qValue = self.getQValue(state, action)
@@ -91,9 +94,14 @@ class QLearningAgent(ReinforcementAgent):
         if len(legalActions) == 0:
             return None
 
+        # If there is only one action,
+        # it is the optimal action
         if len(legalActions) == 1:
             return legalActions[0]
 
+        # Iterate over all legal actions in the state
+        # while keeping track of the highest Q value and the corresponding action,
+        # then return that action.
         bestAction = None
         maxQValue = float("-Inf")
         for action in legalActions:
@@ -120,15 +128,15 @@ class QLearningAgent(ReinforcementAgent):
 
         legalActions = self.getLegalActions(state)
 
-        # Do nothing
+        # Do nothing.
         if len(legalActions) == 0:
             return None
 
-        # Do a random action
+        # Do a random action with chance epsilon.
         if util.flipCoin(self.epsilon):
             return random.choice(legalActions)
 
-        # Do the optimal action
+        # Do the optimal action.
         return self.computeActionFromQValues(state)
 
     def update(self, state, action, nextState, reward):
@@ -141,15 +149,15 @@ class QLearningAgent(ReinforcementAgent):
           it will be called on your behalf
         """
 
+        # Make sure we do not get a key-error.
         if state not in self.qValues:
             self.qValues[state] = dict()
 
+        # Calculate the sample value.
         sample = reward + self.discount * self.computeValueFromQValues(nextState)
 
-        oldQValue = self.getQValue(state, action)
-        newQValue = (1.0 - self.alpha) * oldQValue + self.alpha * sample
-
-        self.qValues[state][action] = newQValue
+        # Combine the old Q value with the sample value according to the learning rate.
+        self.qValues[state][action] = (1.0 - self.alpha) * self.getQValue(state, action) + self.alpha * sample
 
     def getPolicy(self, state):
         return self.computeActionFromQValues(state)
