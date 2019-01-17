@@ -14,7 +14,9 @@
 
 # Mira implementation
 import util
+
 PRINT = True
+
 
 class MiraClassifier:
     """
@@ -23,7 +25,8 @@ class MiraClassifier:
     Note that the variable 'datum' in this code refers to a counter of features
     (not to a raw samples.Datum).
     """
-    def __init__( self, legalLabels, max_iterations):
+
+    def __init__(self, legalLabels, max_iterations):
         self.legalLabels = legalLabels
         self.type = "mira"
         self.automaticTuning = False
@@ -36,12 +39,12 @@ class MiraClassifier:
         "Resets the weights of each label to zero vectors"
         self.weights = {}
         for label in self.legalLabels:
-            self.weights[label] = util.Counter() # this is the data-structure you should use
+            self.weights[label] = util.Counter()  # this is the data-structure you should use
 
     def train(self, trainingData, trainingLabels, validationData, validationLabels):
         "Outside shell to call your method. Do not modify this method."
 
-        self.features = trainingData[0].keys() # this could be useful for your code later...
+        self.features = trainingData[0].keys()  # this could be useful for your code later...
 
         if (self.automaticTuning):
             Cgrid = [0.002, 0.004, 0.008]
@@ -60,10 +63,68 @@ class MiraClassifier:
         datum is a counter from features to values for those features
         representing a vector of values.
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
 
-    def classify(self, data ):
+        weightsPerCeiling = dict()
+        for ceiling in Cgrid:
+            for iteration in range(self.max_iterations):
+                self.doIteration(ceiling, iteration, trainingData, trainingLabels)
+            weightsPerCeiling[ceiling] = self.weights
+            self.initializeWeightsToZero()
+
+        bestCeiling = 0.0
+        highestAccuracy = 0.0
+        validationSetSize = len(validationData)
+        for ceiling, weights in weightsPerCeiling.iteritems():
+            self.weights = weights
+            numberCorrect = 0
+            for i in range(validationSetSize):
+                guessedLabel = self.guessLabel(validationData[i])
+                label = validationLabels[i]
+                if guessedLabel == label:
+                    numberCorrect += 1
+
+            accuracy = float(numberCorrect) / float(validationSetSize)
+            if accuracy > highestAccuracy:
+                bestCeiling = ceiling
+
+        self.weights = weightsPerCeiling[bestCeiling]
+
+    def doIteration(self, ceiling, iteration, trainingData, trainingLabels):
+        print "Starting iteration ", iteration, "..."
+        for i in range(len(trainingData)):
+            self.processInstance(trainingData[i], trainingLabels[i], ceiling)
+
+    def processInstance(self, features, label, ceiling):
+        guessedLabel = self.guessLabel(features)
+        if guessedLabel != label:
+            scaling = min(ceiling, self.calculateScaling(features, label, guessedLabel))
+            scaledFeatures = self.calculateScaledFeatures(features, scaling)
+            self.weights[label] += scaledFeatures
+            self.weights[guessedLabel] -= scaledFeatures
+
+    @staticmethod
+    def calculateScaledFeatures(features, scaling):
+        scaledFeatures = util.Counter()
+        for key in features:
+            scaledFeatures[key] = scaling * features[key]
+        return scaledFeatures
+
+    def guessLabel(self, features):
+        scores = util.Counter()
+        for label in self.legalLabels:
+            scores[label] = features * self.weights[label]
+
+        return scores.argMax()
+
+    def calculateScaling(self, features, actualLabel, guessedLabel):
+        guessedWeights = self.weights[guessedLabel]
+        actualWeights = self.weights[actualLabel]
+        dividend = (guessedWeights - actualWeights) * features + 1.0
+        divisor = 2 * (features * features)
+
+        return dividend / divisor
+
+    def classify(self, data):
         """
         Classifies each datum as the label that most closely matches the prototype vector
         for that label.  See the project description for details.
@@ -77,5 +138,3 @@ class MiraClassifier:
                 vectors[l] = self.weights[l] * datum
             guesses.append(vectors.argMax())
         return guesses
-
-
