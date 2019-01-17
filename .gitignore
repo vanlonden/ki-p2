@@ -1,4 +1,6 @@
 .idea/
+venv/
+
 ki-p2.iml
 
 *.pyc
