@@ -75,10 +75,59 @@ def enhancedFeatureExtractorDigit(datum):
 
     ##
     """
-    features =  basicFeatureExtractorDigit(datum)
+    features = basicFeatureExtractorDigit(datum)
 
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    openSet = set()
+    neighboursDict = dict()
+    for x in range(datum.width):
+        for y in range(datum.height):
+            if datum.getPixel(x, y) < 2:
+                openSet.add((x, y))
+                neighbours = list()
+
+                # left
+                if x - 1 > 0 and datum.getPixel(x - 1, y) < 2:
+                    neighbours.append((x - 1, y))
+
+                # right
+                if x + 1 < datum.width and datum.getPixel(x + 1, y) < 2:
+                    neighbours.append((x + 1, y))
+
+                # above
+                if y - 1 > 0 and datum.getPixel(x, y - 1) < 2:
+                    neighbours.append((x, y - 1))
+
+                # below
+                if y + 1 < datum.height and datum.getPixel(x, y + 1) < 2:
+                    neighbours.append((x, y + 1))
+
+                # edge
+                if x == 0 or y == 0 or x == datum.width - 1 or y == datum.height - 1:
+                    neighbours.append((0, 0))
+
+                neighboursDict[(x, y)] = neighbours
+
+    areas = list()
+    while len(openSet) > 0:
+        pixel = openSet.pop()
+        fringe = list()
+        fringe.append(pixel)
+
+        area = list()
+        area.append(pixel)
+        areas.append(area)
+
+        while len(fringe) > 0:
+            pixel = fringe.pop()
+            for neighbour in neighboursDict[pixel]:
+                if neighbour in openSet:
+                    openSet.remove(neighbour)
+                    area.append(neighbour)
+                    fringe.append(neighbour)
+
+    features["no_loop"] = len(areas) == 1
+    features["1_loops"] = len(areas) == 2
+    features["2_loops"] = len(areas) > 2
 
     return features
 
@@ -364,7 +413,7 @@ def runClassifier(args, options):
     featureFunction = args['featureFunction']
     classifier = args['classifier']
     printImage = args['printImage']
-    
+
     # Load data
     numTraining = options.training
     numTest = options.test
