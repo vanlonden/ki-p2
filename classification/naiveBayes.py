@@ -156,6 +156,11 @@ class NaiveBayesClassifier(classificationMethod.ClassificationMethod):
                 else:
                     logJoint[label] += math.log(1-self.conditionalProb[feat,label])
 
+        threshold = 0.55
+        if len(logJoint) == 2 and True in logJoint and False in logJoint:
+            logJoint[False] *= threshold
+            logJoint[True] *= (1.0 - threshold)
+
         return logJoint
 
     def findHighOddsFeatures(self, label1, label2):
