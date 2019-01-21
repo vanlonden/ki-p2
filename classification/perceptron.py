@@ -50,7 +50,7 @@ class PerceptronClassifier:
         (and thus represents a vector a values).
         """
 
-        self.features = trainingData[0].keys()
+        # self.features = trainingData[0].keys()
 
         for iteration in range(self.max_iterations):
             print "Starting iteration ", iteration, "..."

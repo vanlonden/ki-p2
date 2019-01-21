@@ -25,7 +25,7 @@ class PerceptronClassifierPacman(PerceptronClassifier):
         PerceptronClassifier.__init__(self, legalLabels, maxIterations)
         self.weights = util.Counter()
 
-    def classify(self, data ):
+    def classify(self, data):
         """
         Data contains a list of (datum, legal moves)
         
@@ -36,18 +36,32 @@ class PerceptronClassifierPacman(PerceptronClassifier):
         for datum, legalMoves in data:
             vectors = util.Counter()
             for l in legalMoves:
-                vectors[l] = self.weights * datum[l] #changed from datum to datum[l]
+                vectors[l] = self.weights * datum[l]  # changed from datum to datum[l]
             guesses.append(vectors.argMax())
         return guesses
 
-
-    def train( self, trainingData, trainingLabels, validationData, validationLabels ):
-        self.features = trainingData[0][0]['Stop'].keys() # could be useful later
-        # DO NOT ZERO OUT YOUR WEIGHTS BEFORE STARTING TRAINING, OR
-        # THE AUTOGRADER WILL LIKELY DEDUCT POINTS.
+    def train(self, trainingData, trainingLabels, validationData, validationLabels):
+        # self.features = trainingData[0][0]['Stop'].keys()  # could be useful later
 
         for iteration in range(self.max_iterations):
-            print "Starting iteration ", iteration, "..."
-            for i in range(len(trainingData)):
-                "*** YOUR CODE HERE ***"
-                util.raiseNotDefined()
+            self.doIteration(iteration, trainingData, trainingLabels)
+
+    def doIteration(self, iteration, trainingData, trainingLabels):
+        print "Starting iteration ", iteration, "..."
+        for index in range(len(trainingData)):
+            features, legalLabels = trainingData[index]
+            actualLabel = trainingLabels[index]
+            self.processDatum(features, legalLabels, actualLabel)
+
+    def processDatum(self, features, legalLabels, actualLabel):
+        guessedLabel = self.guessLabel(features, legalLabels)
+        if guessedLabel != actualLabel:
+            self.weights += features[actualLabel]
+            self.weights -= features[guessedLabel]
+
+    def guessLabel(self, features, legalLabels):
+        scores = util.Counter()
+        for label in legalLabels:
+            scores[label] = features[label] * self.weights
+
+        return scores.argMax()
