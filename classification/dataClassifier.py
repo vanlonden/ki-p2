@@ -336,8 +336,10 @@ def readCommand( argv ):
         print USAGE_STRING
         sys.exit(2)
 
-    if(options.data=="digits"):
+    if options.data == "digits":
         legalLabels = range(10)
+    elif options.data == "faces":
+        legalLabels = [True, False]
     else:
         legalLabels = ['Stop', 'West', 'East', 'North', 'South']
 
@@ -418,7 +420,7 @@ def runClassifier(args, options):
     numTraining = options.training
     numTest = options.test
 
-    if(options.data=="pacman"):
+    if options.data == "pacman":
         agentToClone = args.get('agentToClone', None)
         trainingData, validationData, testData = MAP_AGENT_TO_PATH_OF_SAVED_GAMES.get(agentToClone, (None, None, None))
         trainingData = trainingData or args.get('trainingData', False) or MAP_AGENT_TO_PATH_OF_SAVED_GAMES['ContestAgent'][0]
@@ -427,6 +429,18 @@ def runClassifier(args, options):
         rawTrainingData, trainingLabels = samples.loadPacmanData(trainingData, numTraining)
         rawValidationData, validationLabels = samples.loadPacmanData(validationData, numTest)
         rawTestData, testLabels = samples.loadPacmanData(testData, numTest)
+
+    elif options.data == "faces":
+        trainingLabels = samples.loadLabelsFile("facedata/facedatatrainlabels", numTraining)
+        rawTrainingData = samples.loadDataFile("facedata/facedatatrain", numTraining, FACE_DATUM_WIDTH, FACE_DATUM_HEIGHT)
+
+        validationLabels = samples.loadLabelsFile("facedata/facedatavalidationlabels", numTest)
+        rawValidationData = samples.loadDataFile("facedata/facedatavalidation", numTest, FACE_DATUM_WIDTH, FACE_DATUM_HEIGHT)
+
+        testLabels = samples.loadLabelsFile("facedata/facedatatestlabels", numTest)
+        rawTestData = samples.loadDataFile("facedata/facedatatest", numTest, FACE_DATUM_WIDTH, FACE_DATUM_HEIGHT)
+
+
     else:
         rawTrainingData = samples.loadDataFile("digitdata/trainingimages", numTraining,DIGIT_DATUM_WIDTH,DIGIT_DATUM_HEIGHT)
         trainingLabels = samples.loadLabelsFile("digitdata/traininglabels", numTraining)
