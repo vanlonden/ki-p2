@@ -14,16 +14,16 @@
 
 # This file contains feature extraction methods and harness
 # code for data classification
+import math
+import sys
 
+import mira
 import mostFrequent
 import naiveBayes
 import perceptron
 import perceptron_pacman
-import mira
 import samples
-import sys
 import util
-from pacman import GameState
 
 TEST_SET_SIZE = 100
 DIGIT_DATUM_WIDTH=28
@@ -172,9 +172,73 @@ def enhancedPacmanFeatures(state, action):
     It should return a counter with { <feature name> : <feature value>, ... }
     """
     features = util.Counter()
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    successor = state.generateSuccessor(0, action)
+    pacmanX, pacmanY = successor.getPacmanPosition()
+
+    features["is_win"] = successor.isWin()
+    features["is_lose"] = successor.isLose()
+    features["score"] = successor.getScore()
+    features["num_agents"] = successor.getNumAgents()
+    # capsuleQueue = util.PriorityQueue()
+    # capsules = successor.getCapsules()
+    # if len(capsules) > 0:
+    #     features["capsuleDistance"] = getMinimumCapsuleDistance(pacmanX, pacmanY, capsules)
+
+    # nearestCapsuleX, nearestCapsuleY = (0, 0) if capsuleQueue.isEmpty() else capsuleQueue.pop()
+    # features["nearest_capsule_x"] = nearestCapsuleX
+    # features["nearest_capsule_y"] = nearestCapsuleY
+
+    foodGrid = successor.getFood()
+    features["food_distance"] = getNearestFoodDistance(foodGrid, pacmanX, pacmanY)
+
+    ghostDistance = getNearestGhostDistance(successor.getGhostPositions(), pacmanX, pacmanY)
+    scaredTimer = successor.getPacmanState().scaredTimer
+    eatFactor = (scaredTimer + 1) / (ghostDistance + 1)
+
+    features["eat_ghost"] = eatFactor
+    features["scared_timer"] = scaredTimer
+
     return features
+
+
+def getNearestFoodDistance(foodGrid, pacmanX, pacmanY):
+    foodQueue = util.PriorityQueue()
+    for foodX in range(foodGrid.width):
+        for nearestFoodY in range(foodGrid.height):
+            if foodGrid[foodX][nearestFoodY]:
+                distance = calculateDistance(foodX - pacmanX, nearestFoodY - pacmanY)
+                foodQueue.push(distance, distance)
+
+    return 0.0 if foodQueue.isEmpty() else foodQueue.pop()
+
+
+def getNearestGhostDistance(ghostPositions, pacmanX, pacmanY):
+    nearestGhostQueue = util.PriorityQueue()
+    for ghostX, ghostY in ghostPositions:
+        distance = calculateDistance(ghostX - pacmanX, ghostY - pacmanY)
+        nearestGhostQueue.push(distance, distance)
+
+    return nearestGhostQueue.pop()
+
+
+def getMinimumCapsuleDistance(pacmanX, pacmanY, capsules):
+    minCapsuleDistance = float("inf")
+    for capsuleX, capsuleY in capsules:
+        relativeX = capsuleX - pacmanX
+        relativeY = capsuleY - pacmanY
+        # capsuleDistance = calculateDistance(relativeX, relativeY)
+        capsuleDistance = math.fabs(relativeX) + math.fabs(relativeY)
+        if capsuleDistance < minCapsuleDistance:
+            minCapsuleDistance = capsuleDistance
+        # capsuleQueue.push(capsuleDistance, capsuleDistance)
+    return minCapsuleDistance
+
+
+def calculateDistance(relativeX, relativeY):
+    distance = math.sqrt(relativeX * relativeX + relativeY * relativeY)
+    # distance = math.fabs(relativeY) + math.fabs(relativeX)
+    return distance
 
 
 def contestFeatureExtractorDigit(datum):
