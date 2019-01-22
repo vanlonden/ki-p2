@@ -47,13 +47,13 @@ class MiraClassifier:
         self.features = trainingData[0].keys()  # this could be useful for your code later...
 
         if (self.automaticTuning):
-            Cgrid = [0.002, 0.004, 0.008]
+            caps = [0.002, 0.004, 0.008]
         else:
-            Cgrid = [self.C]
+            caps = [self.C]
 
-        return self.trainAndTune(trainingData, trainingLabels, validationData, validationLabels, Cgrid)
+        return self.trainAndTune(trainingData, trainingLabels, validationData, validationLabels, caps)
 
-    def trainAndTune(self, trainingData, trainingLabels, validationData, validationLabels, Cgrid):
+    def trainAndTune(self, trainingData, trainingLabels, validationData, validationLabels, caps):
         """
         This method sets self.weights using MIRA.  Train the classifier for each value of C in Cgrid,
         then store the weights that give the best accuracy on the validationData.
@@ -64,33 +64,35 @@ class MiraClassifier:
         representing a vector of values.
         """
 
-        weightsPerCeiling = dict()
-        for ceiling in Cgrid:
+        weightsPerCap = dict()
+        for cap in caps:
+            print "Starting training for c = ", str(cap)
             for iteration in range(self.max_iterations):
-                self.doIteration(ceiling, iteration, trainingData, trainingLabels)
-            weightsPerCeiling[ceiling] = self.weights
+                self.doIteration(cap, iteration, trainingData, trainingLabels)
+            weightsPerCap[cap] = self.weights
             self.initializeWeightsToZero()
 
-        bestCeiling = 0.0
-        highestAccuracy = 0.0
-        validationSetSize = len(validationData)
-        for ceiling, weights in weightsPerCeiling.iteritems():
+        accuracies = util.Counter()
+        for cap, weights in weightsPerCap.iteritems():
             self.weights = weights
-            numberCorrect = 0
-            for i in range(validationSetSize):
-                guessedLabel = self.guessLabel(validationData[i])
-                label = validationLabels[i]
-                if guessedLabel == label:
-                    numberCorrect += 1
+            accuracy = self.getAccuracy(validationData, validationLabels)
+            print "Accuracy on validation set for c = ", str(cap), ": ", str(accuracy)
+            accuracies[cap] = accuracy
 
-            accuracy = float(numberCorrect) / float(validationSetSize)
-            if accuracy > highestAccuracy:
-                bestCeiling = ceiling
+        self.weights = weightsPerCap[accuracies.argMax()]
 
-        self.weights = weightsPerCeiling[bestCeiling]
+    def getAccuracy(self, validationData, validationLabels):
+        numberCorrect = 0
+        for i in range(len(validationData)):
+            guessedLabel = self.guessLabel(validationData[i])
+            label = validationLabels[i]
+            if guessedLabel == label:
+                numberCorrect += 1
+
+        return float(numberCorrect) / float(len(validationData))
 
     def doIteration(self, ceiling, iteration, trainingData, trainingLabels):
-        print "Starting iteration ", iteration, "..."
+        print "Starting iteration ", iteration
         for i in range(len(trainingData)):
             self.processInstance(trainingData[i], trainingLabels[i], ceiling)
 
