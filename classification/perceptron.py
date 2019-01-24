@@ -50,20 +50,26 @@ class PerceptronClassifier:
         (and thus represents a vector a values).
         """
 
-        # self.features = trainingData[0].keys()
-
         for iteration in range(self.max_iterations):
-            print "Starting iteration ", iteration, "..."
-            for i in range(len(trainingData)):
-                features = trainingData[i]
-                scores = util.Counter()
-                for label in self.legalLabels:
-                    scores[label] = features * self.weights[label]
-                maxScoreLabel = scores.argMax()
-                actualLabel = trainingLabels[i]
-                if maxScoreLabel != actualLabel:
-                    self.weights[actualLabel] += features
-                    self.weights[maxScoreLabel] -= features
+            self.doIteration(iteration, trainingData, trainingLabels)
+
+    def doIteration(self, iteration, trainingData, trainingLabels):
+        print "Starting iteration ", iteration, "..."
+        for i in range(len(trainingData)):
+            self.processDatum(trainingData[i], trainingLabels[i])
+
+    def processDatum(self, features, label):
+        guessedLabel = self.guessLabel(features)
+        if guessedLabel != label:
+            self.weights[label] += features
+            self.weights[guessedLabel] -= features
+
+    def guessLabel(self, features, ):
+        scores = util.Counter()
+        for label in self.legalLabels:
+            scores[label] = features * self.weights[label]
+
+        return scores.argMax()
 
     def classify(self, data):
         """
@@ -79,6 +85,7 @@ class PerceptronClassifier:
             for l in self.legalLabels:
                 vectors[l] = self.weights[l] * datum
             guesses.append(vectors.argMax())
+
         return guesses
 
     def findHighWeightFeatures(self, label):

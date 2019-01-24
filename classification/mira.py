@@ -64,6 +64,13 @@ class MiraClassifier:
         representing a vector of values.
         """
 
+        weightsPerCap = self.trainWeights(caps, trainingData, trainingLabels)
+        accuracies = self.getAccuracies(weightsPerCap, validationData, validationLabels)
+
+        # Set the weights of the best cap
+        self.weights = weightsPerCap[accuracies.argMax()]
+
+    def trainWeights(self, caps, trainingData, trainingLabels):
         weightsPerCap = dict()
         for cap in caps:
             print "Starting training for c = ", str(cap)
@@ -71,7 +78,9 @@ class MiraClassifier:
                 self.doIteration(cap, iteration, trainingData, trainingLabels)
             weightsPerCap[cap] = self.weights
             self.initializeWeightsToZero()
+        return weightsPerCap
 
+    def getAccuracies(self, weightsPerCap, validationData, validationLabels):
         accuracies = util.Counter()
         for cap, weights in weightsPerCap.iteritems():
             self.weights = weights
@@ -79,7 +88,7 @@ class MiraClassifier:
             print "Accuracy on validation set for c = ", str(cap), ": ", str(accuracy)
             accuracies[cap] = accuracy
 
-        self.weights = weightsPerCap[accuracies.argMax()]
+        return accuracies
 
     def getAccuracy(self, validationData, validationLabels):
         numberCorrect = 0
@@ -104,19 +113,19 @@ class MiraClassifier:
             self.weights[label] += scaledFeatures
             self.weights[guessedLabel] -= scaledFeatures
 
-    @staticmethod
-    def calculateScaledFeatures(features, scaling):
-        scaledFeatures = util.Counter()
-        for key in features:
-            scaledFeatures[key] = scaling * features[key]
-        return scaledFeatures
-
     def guessLabel(self, features):
         scores = util.Counter()
         for label in self.legalLabels:
             scores[label] = features * self.weights[label]
 
         return scores.argMax()
+
+    @staticmethod
+    def calculateScaledFeatures(features, scaling):
+        scaledFeatures = util.Counter()
+        for key in features:
+            scaledFeatures[key] = scaling * features[key]
+        return scaledFeatures
 
     def calculateScaling(self, features, actualLabel, guessedLabel):
         guessedWeights = self.weights[guessedLabel]
@@ -125,6 +134,13 @@ class MiraClassifier:
         divisor = 2 * (features * features)
 
         return dividend / divisor
+
+    def findHighWeightFeatures(self, label):
+        """
+        Returns a list of the 100 features with the greatest weight for some label
+        """
+
+        return self.weights[label].sortedKeys()[:100]
 
     def classify(self, data):
         """
@@ -140,10 +156,3 @@ class MiraClassifier:
                 vectors[l] = self.weights[l] * datum
             guesses.append(vectors.argMax())
         return guesses
-
-    def findHighWeightFeatures(self, label):
-        """
-        Returns a list of the 100 features with the greatest weight for some label
-        """
-
-        return self.weights[label].sortedKeys()[:100]

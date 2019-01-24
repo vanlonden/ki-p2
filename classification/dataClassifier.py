@@ -75,62 +75,118 @@ def enhancedFeatureExtractorDigit(datum):
 
     ##
     """
-    features = basicFeatureExtractorDigit(datum)
 
-    openSet = set()
-    neighboursDict = dict()
-    for x in range(datum.width):
-        for y in range(datum.height):
-            if datum.getPixel(x, y) < 2:
-                openSet.add((x, y))
-                neighbours = list()
-
-                # left
-                if x - 1 > 0 and datum.getPixel(x - 1, y) < 2:
-                    neighbours.append((x - 1, y))
-
-                # right
-                if x + 1 < datum.width and datum.getPixel(x + 1, y) < 2:
-                    neighbours.append((x + 1, y))
-
-                # above
-                if y - 1 > 0 and datum.getPixel(x, y - 1) < 2:
-                    neighbours.append((x, y - 1))
-
-                # below
-                if y + 1 < datum.height and datum.getPixel(x, y + 1) < 2:
-                    neighbours.append((x, y + 1))
-
-                # edge
-                if x == 0 or y == 0 or x == datum.width - 1 or y == datum.height - 1:
-                    neighbours.append((0, 0))
-
-                neighboursDict[(x, y)] = neighbours
+    neighbourLists, backgroundPixel = getNeighbourLists(datum)
 
     areas = list()
-    while len(openSet) > 0:
-        pixel = openSet.pop()
-        fringe = list()
-        fringe.append(pixel)
+    while len(backgroundPixel) > 0:
+        areas.append(getNextArea(backgroundPixel, neighbourLists))
 
-        area = list()
-        area.append(pixel)
-        areas.append(area)
-
-        while len(fringe) > 0:
-            pixel = fringe.pop()
-            for neighbour in neighboursDict[pixel]:
-                if neighbour in openSet:
-                    openSet.remove(neighbour)
-                    area.append(neighbour)
-                    fringe.append(neighbour)
-
+    features = basicFeatureExtractorDigit(datum)
     features["no_loop"] = len(areas) == 1
     features["1_loops"] = len(areas) == 2
     features["2_loops"] = len(areas) > 2
 
     return features
 
+
+def getNextArea(backgroundPixel, neighbourLists):
+    pixel = backgroundPixel.pop()
+
+    fringe = list()
+    fringe.append(pixel)
+
+    area = list()
+    area.append(pixel)
+
+    while len(fringe) > 0:
+        pixel = fringe.pop()
+        for neighbour in neighbourLists[pixel]:
+            if neighbour in backgroundPixel:
+                # If two pixels are in the same area
+                # we don't need to check that pixel again
+                backgroundPixel.remove(neighbour)
+                # We need to explore the neighbour's neighbours
+                fringe.append(neighbour)
+                # Any two neighbour are in the same area
+                area.append(neighbour)
+
+    return area
+
+
+def getNeighbourLists(datum):
+    backgroundPixels = set()
+    neighbourLists = dict()
+    for x in range(datum.width):
+        for y in range(datum.height):
+            if isBackgroundPixel(x, y, datum):
+                backgroundPixels.add((x, y))
+                neighbourList = getNeighbourList(x, y, datum)
+                neighbourLists[(x, y)] = neighbourList
+
+    return neighbourLists, backgroundPixels
+
+
+def getNeighbourList(x, y, datum):
+    neighbourList = list()
+
+    if isBackgroundPixel(x - 1, y, datum):
+        neighbourList.append((x - 1, y))
+
+    if isBackgroundPixel(x + 1, y, datum):
+        neighbourList.append((x + 1, y))
+
+    if isBackgroundPixel(x, y - 1, datum):
+        neighbourList.append((x, y - 1))
+
+    if isBackgroundPixel(x, y + 1, datum):
+        neighbourList.append((x, y + 1))
+
+    # Connect all the edges pixel with each other
+    # The contours of th image are all one big area
+    if isEdgePixel(x, y, datum):
+        neighbourList.append((0, 0))
+
+    return neighbourList
+
+
+def isPixel(x, y, datum):
+    if x < 0:
+        return False
+
+    if y < 0:
+        return False
+
+    if x >= datum.width:
+        return False
+
+    if y >= datum.height:
+        return False
+
+    return True
+
+
+def isBackgroundPixel(x, y, datum):
+    if not isPixel(x, y, datum):
+        return False
+
+    return datum.getPixel(x, y) < 2
+
+
+def isEdgePixel(x, y, datum):
+    if x == 0:
+        return True
+
+    if y == 0:
+        return True
+
+    if x == datum.width - 1:
+        return True
+
+    if y == datum.height - 1:
+        return True
+
+    return False
 
 
 def basicFeatureExtractorPacman(state):
@@ -180,14 +236,6 @@ def enhancedPacmanFeatures(state, action):
     features["is_lose"] = successor.isLose()
     features["score"] = successor.getScore()
     features["num_agents"] = successor.getNumAgents()
-    # capsuleQueue = util.PriorityQueue()
-    # capsules = successor.getCapsules()
-    # if len(capsules) > 0:
-    #     features["capsuleDistance"] = getMinimumCapsuleDistance(pacmanX, pacmanY, capsules)
-
-    # nearestCapsuleX, nearestCapsuleY = (0, 0) if capsuleQueue.isEmpty() else capsuleQueue.pop()
-    # features["nearest_capsule_x"] = nearestCapsuleX
-    # features["nearest_capsule_y"] = nearestCapsuleY
 
     foodGrid = successor.getFood()
     features["food_distance"] = getNearestFoodDistance(foodGrid, pacmanX, pacmanY)
@@ -205,9 +253,9 @@ def enhancedPacmanFeatures(state, action):
 def getNearestFoodDistance(foodGrid, pacmanX, pacmanY):
     foodQueue = util.PriorityQueue()
     for foodX in range(foodGrid.width):
-        for nearestFoodY in range(foodGrid.height):
-            if foodGrid[foodX][nearestFoodY]:
-                distance = calculateDistance(foodX - pacmanX, nearestFoodY - pacmanY)
+        for foodY in range(foodGrid.height):
+            if foodGrid[foodX][foodY]:
+                distance = calculateDistance(foodX - pacmanX, foodY - pacmanY)
                 foodQueue.push(distance, distance)
 
     return 0.0 if foodQueue.isEmpty() else foodQueue.pop()
@@ -222,22 +270,20 @@ def getNearestGhostDistance(ghostPositions, pacmanX, pacmanY):
     return nearestGhostQueue.pop()
 
 
-def getMinimumCapsuleDistance(pacmanX, pacmanY, capsules):
+def getNearestCapsuleDistance(pacmanX, pacmanY, capsules):
     minCapsuleDistance = float("inf")
     for capsuleX, capsuleY in capsules:
         relativeX = capsuleX - pacmanX
         relativeY = capsuleY - pacmanY
-        # capsuleDistance = calculateDistance(relativeX, relativeY)
         capsuleDistance = math.fabs(relativeX) + math.fabs(relativeY)
         if capsuleDistance < minCapsuleDistance:
             minCapsuleDistance = capsuleDistance
-        # capsuleQueue.push(capsuleDistance, capsuleDistance)
+
     return minCapsuleDistance
 
 
 def calculateDistance(relativeX, relativeY):
     distance = math.sqrt(relativeX * relativeX + relativeY * relativeY)
-    # distance = math.fabs(relativeY) + math.fabs(relativeX)
     return distance
 
 
@@ -546,7 +592,7 @@ def runClassifier(args, options):
         printImage(features_odds)
 
     if((options.weights) & (options.classifier == "perceptron" or options.classifier == "mira")):
-        for l in classifier.legalLabels:    
+        for l in classifier.legalLabels:
             features_weights = classifier.findHighWeightFeatures(l)
             print ("=== Features with high weight for label %d ==="%l)
             printImage(features_weights)
